@@ -26,21 +26,22 @@ func newStatusCmd() *cobra.Command {
 				return fmt.Errorf("no providers enabled in config")
 			}
 			out := cmd.OutOrStdout()
-			var firstErr error
+			failed := 0
 			for _, p := range providers {
 				ctx, cancel := context.WithTimeout(cmd.Context(), 30*time.Second)
 				u, err := p.ReadUsage(ctx)
 				cancel()
 				if err != nil {
 					fmt.Fprintf(out, "%-7s  error: %v\n", p.Name(), err)
-					if firstErr == nil {
-						firstErr = err
-					}
+					failed++
 					continue
 				}
 				printUsage(cmd, u, verbose)
 			}
-			return firstErr
+			if failed > 0 {
+				return fmt.Errorf("status failed for %d provider(s)", failed)
+			}
+			return nil
 		},
 	}
 	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "print the raw JSON response")
