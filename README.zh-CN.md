@@ -101,6 +101,7 @@ limitping ping codex           # 只触发 Codex
 limitping ping glm             # 只触发 GLM
 limitping ping --dry-run       # 只打印将执行的命令,不真正发送
 limitping watch                # 前台守护:在每个窗口重置时自动 ping
+limitping watch claude         # 只监测某一个 Provider(claude|codex|glm)
 limitping watch --dry-run      # 只记录何时会触发,不真正发送
 ```
 

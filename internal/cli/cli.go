@@ -85,20 +85,28 @@ func selectProviders(cfg config.Config, name string) ([]provider.Provider, error
 	return []provider.Provider{p}, nil
 }
 
-// buildTargets builds scheduler targets for all enabled providers, parsing each
-// provider's align_start anchor.
+// makeTarget pairs a provider with its parsed align_start anchor.
+func makeTarget(p provider.Provider, alignStart string) (scheduler.Target, error) {
+	var anchor time.Time
+	if alignStart != "" {
+		t, err := time.Parse(time.RFC3339, alignStart)
+		if err != nil {
+			return scheduler.Target{}, fmt.Errorf("%s align_start: %w", p.Name(), err)
+		}
+		anchor = t
+	}
+	return scheduler.Target{Provider: p, AlignStart: anchor}, nil
+}
+
+// buildTargets builds scheduler targets for all enabled providers.
 func buildTargets(cfg config.Config) ([]scheduler.Target, error) {
 	var targets []scheduler.Target
 	add := func(p provider.Provider, alignStart string) error {
-		var anchor time.Time
-		if alignStart != "" {
-			t, err := time.Parse(time.RFC3339, alignStart)
-			if err != nil {
-				return fmt.Errorf("%s align_start: %w", p.Name(), err)
-			}
-			anchor = t
+		t, err := makeTarget(p, alignStart)
+		if err != nil {
+			return err
 		}
-		targets = append(targets, scheduler.Target{Provider: p, AlignStart: anchor})
+		targets = append(targets, t)
 		return nil
 	}
 	if cfg.Claude.Enabled {
@@ -120,4 +128,35 @@ func buildTargets(cfg config.Config) ([]scheduler.Target, error) {
 		return nil, fmt.Errorf("no providers enabled in config")
 	}
 	return targets, nil
+}
+
+// selectTargets resolves a provider name to scheduler targets. "all" (or empty)
+// returns targets for every enabled provider; a specific name returns just that
+// one, even if it's disabled in config (an explicit override, matching `ping`).
+func selectTargets(cfg config.Config, name string) ([]scheduler.Target, error) {
+	if name == "" || name == "all" {
+		return buildTargets(cfg)
+	}
+	p, err := buildProvider(name, cfg)
+	if err != nil {
+		return nil, err
+	}
+	t, err := makeTarget(p, providerAlignStart(cfg, name))
+	if err != nil {
+		return nil, err
+	}
+	return []scheduler.Target{t}, nil
+}
+
+// providerAlignStart returns the configured align_start for a provider name.
+func providerAlignStart(cfg config.Config, name string) string {
+	switch name {
+	case "claude":
+		return cfg.Claude.AlignStart
+	case "codex":
+		return cfg.Codex.AlignStart
+	case "glm":
+		return cfg.GLM.AlignStart
+	}
+	return ""
 }

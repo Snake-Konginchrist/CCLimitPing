@@ -16,14 +16,21 @@ import (
 func newWatchCmd() *cobra.Command {
 	var dryRun bool
 	cmd := &cobra.Command{
-		Use:   "watch",
-		Short: "Run the foreground daemon: ping each provider when its 5h window resets",
-		RunE: func(cmd *cobra.Command, _ []string) error {
+		Use:       "watch [claude|codex|glm|all]",
+		Short:     "Run the foreground daemon: ping each provider when its 5h window resets",
+		Long:      "Run the foreground daemon. With no argument it watches every enabled provider; pass a name to watch just that one (even if it's disabled in config).\n\nExamples:\n  limitping watch          # all enabled providers\n  limitping watch claude   # Claude only\n  limitping watch codex    # Codex only\n  limitping watch glm      # GLM only",
+		Args:      cobra.MaximumNArgs(1),
+		ValidArgs: []string{"claude", "codex", "glm", "all"},
+		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Load()
 			if err != nil {
 				return err
 			}
-			targets, err := buildTargets(cfg)
+			name := "all"
+			if len(args) > 0 {
+				name = args[0]
+			}
+			targets, err := selectTargets(cfg, name)
 			if err != nil {
 				return err
 			}

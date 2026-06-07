@@ -106,6 +106,7 @@ limitping ping codex           # Codex only
 limitping ping glm             # GLM only
 limitping ping --dry-run       # show the commands without sending
 limitping watch                # foreground daemon: ping each window at reset
+limitping watch claude         # watch only one provider (claude|codex|glm)
 limitping watch --dry-run      # log when pings would fire, without sending
 ```
 
