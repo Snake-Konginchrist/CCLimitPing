@@ -3,6 +3,8 @@
 [English](README.md) | **中文**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![CI](https://github.com/wavever/CCLimitPing/actions/workflows/ci.yml/badge.svg)](https://github.com/wavever/CCLimitPing/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/wavever/CCLimitPing?include_prereleases&sort=semver)](https://github.com/wavever/CCLimitPing/releases)
 ![Go](https://img.shields.io/badge/Go-1.25%2B-00ADD8?logo=go&logoColor=white)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey)
 
@@ -20,6 +22,26 @@
 claude  ✓ pinged (6.6s)
 codex   ✓ pinged (13.6s, 16,862 tok (in 16,814 / out 48), $0.0098)
 ```
+
+## 亮点
+
+- 让 5 小时 Provider 窗口连续接上,避免空档把你的使用节奏越拖越偏。
+- 用零消耗用量端点读取状态,并尽量通过官方 Provider 工具触发新窗口。
+- 支持 Claude Code、Codex,以及可选开启的 GLM/Z.ai Coding Plan 监控。
+- 内置 dry-run、周限额保护、重置缓冲、本地配置,且不带遥测。
+
+## 快速开始
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/wavever/CCLimitPing/main/install.sh | sh
+limitping config init
+limitping ping --dry-run
+limitping status
+limitping watch
+```
+
+如果你想先确认会发生什么、但不消耗 Provider 额度,先运行
+`limitping ping --dry-run` 或 `limitping watch --dry-run`。
 
 ## 支持的 Provider
 
@@ -240,6 +262,8 @@ launchctl load ~/Library/LaunchAgents/com.limitping.watch.plist
 
 ## 成本与注意事项
 
+- 本地数据处理和网络行为见 [PRIVACY.md](PRIVACY.md)。
+- 漏洞报告和凭据处理说明见 [SECURITY.md](SECURITY.md)。
 - 触发会**消耗一点额度**(约每 5h 一次 ≈ 每周 33 次)。ping 用最小 prompt + 低 reasoning,
   成本很小但非零。
 - **用量端点是非官方接口**,可能变更;它们都是只读的,并按 Provider 隔离,方便单独热修。
@@ -262,12 +286,14 @@ internal/cli             cobra 命令:status、ping、watch、config、version
 
 ## 贡献
 
-欢迎提 Issue 和 PR。提交前请先跑:
+欢迎提 Issue 和 PR。请先阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 和
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)。提交前请先跑:
 
 ```sh
 gofmt -l .        # 应当无输出
 go build ./...
 go vet ./...
+go test ./...
 ```
 
 Provider 都隔离在 `internal/provider`(每家一个文件),只需实现一个很小的 `Provider`

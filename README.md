@@ -3,6 +3,8 @@
 **English** | [中文](README.zh-CN.md)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![CI](https://github.com/wavever/CCLimitPing/actions/workflows/ci.yml/badge.svg)](https://github.com/wavever/CCLimitPing/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/wavever/CCLimitPing?include_prereleases&sort=semver)](https://github.com/wavever/CCLimitPing/releases)
 ![Go](https://img.shields.io/badge/Go-1.25%2B-00ADD8?logo=go&logoColor=white)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey)
 
@@ -22,6 +24,29 @@ continuous and predictable.
 claude  ✓ pinged (6.6s)
 codex   ✓ pinged (13.6s, 16,862 tok (in 16,814 / out 48), $0.0098)
 ```
+
+## Highlights
+
+- Keeps 5-hour provider windows continuous instead of letting idle gaps drift
+  your schedule.
+- Reads usage from zero-quota endpoints and triggers windows through the
+  official provider tools whenever possible.
+- Supports Claude Code, Codex, and opt-in GLM/Z.ai Coding Plan monitoring.
+- Includes dry-run modes, weekly-limit guards, reset buffers, local config, and
+  no telemetry.
+
+## Quick start
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/wavever/CCLimitPing/main/install.sh | sh
+limitping config init
+limitping ping --dry-run
+limitping status
+limitping watch
+```
+
+Use `limitping ping --dry-run` or `limitping watch --dry-run` first if you want
+to inspect what would happen without consuming provider quota.
 
 ## Supported providers
 
@@ -261,6 +286,9 @@ launchctl load ~/Library/LaunchAgents/com.limitping.watch.plist
 
 ## Cost & caveats
 
+- See [PRIVACY.md](PRIVACY.md) for local data handling and network behavior.
+- See [SECURITY.md](SECURITY.md) for vulnerability reporting and credential
+  handling notes.
 - Triggering **consumes a little quota** (~one ping per 5h ≈ 33/week). The ping
   uses a minimal prompt and low reasoning, so the cost is tiny but non-zero.
 - The **usage endpoints are unofficial** and could change; they're read-only and
@@ -285,12 +313,14 @@ internal/cli             cobra commands: status, ping, watch, config, version
 
 ## Contributing
 
-Issues and PRs are welcome. Before submitting:
+Issues and PRs are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Before submitting:
 
 ```sh
 gofmt -l .        # should print nothing
 go build ./...
 go vet ./...
+go test ./...
 ```
 
 Providers are isolated in `internal/provider` (one file each) with a small

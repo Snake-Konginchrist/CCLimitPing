@@ -3,6 +3,18 @@
 /dist/
 /limitping
 *.out
+coverage.out
+*.test
+
+# local config / secrets
+.env
+.env.*
+!.env.example
+config.toml
+*.local.toml
+
+# logs
+*.log
 
 # os / editor
 .DS_Store
