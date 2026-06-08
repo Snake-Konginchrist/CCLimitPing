@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">CCLimitPing icon</title>
+  <desc id="desc">A terminal window surrounded by a continuous quota ring and a ping pulse.</desc>
+  <defs>
+    <linearGradient id="bg" x1="120" y1="96" x2="904" y2="928" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#132034"/>
+      <stop offset="0.45" stop-color="#111827"/>
+      <stop offset="1" stop-color="#12131F"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="196" y1="262" x2="820" y2="774" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#66E4FF"/>
+      <stop offset="0.55" stop-color="#59F3B6"/>
+      <stop offset="1" stop-color="#FFD166"/>
+    </linearGradient>
+    <linearGradient id="terminal" x1="300" y1="342" x2="724" y2="674" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#17253A"/>
+      <stop offset="1" stop-color="#0B1220"/>
+    </linearGradient>
+    <linearGradient id="quota" x1="360" y1="620" x2="664" y2="620" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#66E4FF"/>
+      <stop offset="0.55" stop-color="#59F3B6"/>
+      <stop offset="1" stop-color="#FFD166"/>
+    </linearGradient>
+    <pattern id="grid" width="64" height="64" patternUnits="userSpaceOnUse">
+      <path d="M64 0H0V64" fill="none" stroke="#FFFFFF" stroke-opacity="0.055" stroke-width="2"/>
+    </pattern>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="26" stdDeviation="32" flood-color="#020617" flood-opacity="0.45"/>
+    </filter>
+    <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="14" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1024" height="1024" rx="224" fill="url(#bg)"/>
+  <rect width="1024" height="1024" rx="224" fill="url(#grid)" opacity="0.72"/>
+  <circle cx="512" cy="512" r="390" fill="#66E4FF" opacity="0.05"/>
+  <circle cx="512" cy="512" r="300" fill="none" stroke="#0B1220" stroke-width="92" opacity="0.54"/>
+
+  <g fill="none" stroke-linecap="round">
+    <circle cx="512" cy="512" r="326" stroke="#263247" stroke-width="58"/>
+    <circle cx="512" cy="512" r="326" stroke="url(#ring)" stroke-width="58" pathLength="100"
+            stroke-dasharray="69 9 5 17" transform="rotate(-90 512 512)"/>
+    <circle cx="512" cy="512" r="255" stroke="#FFFFFF" stroke-opacity="0.08" stroke-width="3"
+            stroke-dasharray="2 22"/>
+  </g>
+
+  <g fill="#D9FFF5">
+    <circle cx="512" cy="186" r="9"/>
+    <circle cx="822" cy="411" r="9"/>
+    <circle cx="704" cy="776" r="9"/>
+    <circle cx="320" cy="776" r="9"/>
+    <circle cx="202" cy="411" r="9"/>
+  </g>
+
+  <g filter="url(#glow)" opacity="0.88">
+    <circle cx="768" cy="313" r="72" fill="#FFD166" opacity="0.12"/>
+    <circle cx="768" cy="313" r="46" fill="none" stroke="#FFD166" stroke-width="10" opacity="0.62"/>
+    <circle cx="768" cy="313" r="18" fill="#FFE9A6"/>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="290" y="342" width="444" height="340" rx="64" fill="url(#terminal)" stroke="#B7F7FF" stroke-opacity="0.22" stroke-width="4"/>
+    <path d="M334 414H690" stroke="#FFFFFF" stroke-opacity="0.12" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="368" cy="382" r="12" fill="#FF6B6B"/>
+    <circle cx="408" cy="382" r="12" fill="#FFD166"/>
+    <circle cx="448" cy="382" r="12" fill="#59F3B6"/>
+
+    <path d="M380 506L431 548L380 590" fill="none" stroke="#66E4FF" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="558" y="575" text-anchor="middle"
+          font-family="Inter, SF Pro Display, Segoe UI, Helvetica, Arial, sans-serif"
+          font-size="154" font-weight="800" fill="#F8FAFC">LP</text>
+
+    <rect x="360" y="620" width="304" height="28" rx="14" fill="#22304A"/>
+    <rect x="360" y="620" width="232" height="28" rx="14" fill="url(#quota)"/>
+    <circle cx="612" cy="634" r="23" fill="#FFD166"/>
+  </g>
+
+  <path d="M164 512C164 319.8 319.8 164 512 164" fill="none" stroke="#FFFFFF" stroke-opacity="0.18" stroke-width="7" stroke-linecap="round"/>
+  <path d="M512 860C704.2 860 860 704.2 860 512" fill="none" stroke="#59F3B6" stroke-opacity="0.18" stroke-width="7" stroke-linecap="round"/>
+</svg>
