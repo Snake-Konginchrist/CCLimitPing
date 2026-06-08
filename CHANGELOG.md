@@ -5,7 +5,7 @@ All notable changes to this project should be documented here.
 This project uses version tags such as `v0.2.0`. Release binaries are published
 through GitHub Actions and GoReleaser.
 
-## Unreleased
+## v0.4.0
 
 - `watch` now draws a live status line on an interactive terminal: a spinner
   plus each provider's current state and a live countdown to its next ping,
@@ -18,9 +18,6 @@ through GitHub Actions and GoReleaser.
   `bg stop` ends it, and `bg logs [-f] [-n N]` shows its output. Only one
   background watcher runs at a time; state and logs live under the config dir
   (`bg.json` / `bg.log`).
-
-## v0.4.0
-
 - Fixed the Claude trigger: the interactive session now actually submits the
   prompt (and waits for the turn to run) instead of exiting before any message
   was sent, so the 5h window reliably starts.
