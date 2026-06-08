@@ -122,10 +122,8 @@ func buildProvider(name string, cfg config.Config) (provider.Provider, error) {
 		return provider.NewClaude(cfg.Claude), nil
 	case "codex":
 		return provider.NewCodex(cfg.Codex), nil
-	case "glm":
-		return provider.NewGLM(cfg.GLM), nil
 	default:
-		return nil, fmt.Errorf("unknown provider %q (want claude, codex, glm, or all)", name)
+		return nil, fmt.Errorf("unknown provider %q (want claude, codex, or all)", name)
 	}
 }
 
@@ -137,9 +135,6 @@ func enabledProviders(cfg config.Config) []provider.Provider {
 	}
 	if cfg.Codex.Enabled {
 		ps = append(ps, provider.NewCodex(cfg.Codex))
-	}
-	if cfg.GLM.Enabled {
-		ps = append(ps, provider.NewGLM(cfg.GLM))
 	}
 	return ps
 }
@@ -196,11 +191,6 @@ func buildTargets(cfg config.Config) ([]scheduler.Target, error) {
 			return nil, err
 		}
 	}
-	if cfg.GLM.Enabled {
-		if err := add(provider.NewGLM(cfg.GLM), cfg.GLM.AlignStart); err != nil {
-			return nil, err
-		}
-	}
 	if len(targets) == 0 {
 		return nil, fmt.Errorf("no providers enabled in config")
 	}
@@ -232,8 +222,6 @@ func providerAlignStart(cfg config.Config, name string) string {
 		return cfg.Claude.AlignStart
 	case "codex":
 		return cfg.Codex.AlignStart
-	case "glm":
-		return cfg.GLM.AlignStart
 	}
 	return ""
 }

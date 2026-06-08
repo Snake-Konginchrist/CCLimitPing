@@ -7,7 +7,9 @@ through GitHub Actions and GoReleaser.
 
 ## Unreleased
 
-- Nothing yet.
+- Removed the experimental GLM (Zhipu / Z.ai) provider. `limitping` now targets
+  Claude Code and Codex only; the `[glm]` config block and `glm` provider
+  argument are gone.
 
 ## v0.3.0
 

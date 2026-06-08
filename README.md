@@ -8,8 +8,7 @@
 ![Go](https://img.shields.io/badge/Go-1.25%2B-00ADD8?logo=go&logoColor=white)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey)
 
-Keep your **Claude Code**, **Codex**, and **GLM** (Zhipu / Z.ai Coding Plan)
-rate-limit windows back-to-back.
+Keep your **Claude Code** and **Codex** rate-limit windows back-to-back.
 
 These providers bill on a **5-hour rolling window** (plus a weekly cap), and the
 5h window **starts on your first message**. If you don't send anything right when
@@ -30,8 +29,10 @@ codex   ✓ pinged (13.6s, 16,862 tok (in 16,814 / out 48), $0.0098)
 - Keeps 5-hour provider windows continuous instead of letting idle gaps drift
   your schedule.
 - Reads usage from zero-quota endpoints and triggers windows through the
-  official provider tools whenever possible.
-- Supports Claude Code, Codex, and opt-in GLM/Z.ai Coding Plan monitoring.
+  official provider tools.
+- Supports Claude Code and Codex.
+- Detects an actively running Claude/Codex session (via CLI hooks) and defers its
+  ping so it never competes with your own turn.
 - Includes dry-run modes, weekly-limit guards, reset buffers, local config, and
   no telemetry.
 
@@ -54,11 +55,6 @@ to inspect what would happen without consuming provider quota.
 |---|---|---|---|
 | **Claude Code** | `…/api/oauth/usage` | interactive Claude Code CLI | OAuth (Keychain / `~/.claude`) |
 | **Codex** | `…/backend-api/wham/usage` | `codex exec` | OAuth (`~/.codex/auth.json`) |
-| **GLM** (Zhipu / Z.ai) | `…/api/monitor/usage/quota/limit` | minimal chat completion | API key (config / env) |
-
-> [!NOTE]
-> GLM is **off by default** and not yet verified on a live plan — see
-> [GLM](#glm-zhipu--zai-coding-plan) before enabling it.
 
 ## How it works
 
@@ -66,13 +62,15 @@ Two cleanly separated jobs:
 
 | Job | Mechanism | Cost |
 |-----|-----------|------|
-| **Trigger** a new window | the official CLI (interactive Claude Code / `codex exec`), or a minimal API call (GLM) | a tiny slice of quota (this is the point) |
+| **Trigger** a new window | the official CLI (interactive Claude Code / `codex exec`) | a tiny slice of quota (this is the point) |
 | **Read** usage & reset times | zero-quota usage endpoints (the same ones CodexBar / community plugins use) | none — never starts a window |
 
-When `watch` sees a 5h window has reset, it first checks for an already-running
-Claude/Codex CLI task. If one is running, `limitping` waits and re-reads usage
-instead of sending its own ping, because that task's next model request will
-start the new window naturally.
+When `watch` sees a 5h window has reset, it first checks whether a Claude/Codex
+session is actively mid-turn. If one is, `limitping` waits and re-reads usage
+instead of sending its own ping, because that session's next model request will
+start the new window naturally. With [hooks installed](#active-session-detection-hooks)
+this is true mid-turn detection; otherwise it falls back to scanning for a
+running CLI process.
 
 - **Claude**: reads `GET https://api.anthropic.com/api/oauth/usage` using the
   OAuth token from the macOS Keychain (`Claude Code-credentials`) or
@@ -82,13 +80,9 @@ start the new window naturally.
   SDK/API credits.
 - **Codex**: reads `GET https://chatgpt.com/backend-api/wham/usage` using the
   OAuth token from `~/.codex/auth.json`.
-- **GLM**: reads `GET …/api/monitor/usage/quota/limit` (on `api.z.ai` or
-  `open.bigmodel.cn`) using your Coding Plan API key. GLM has no standalone CLI,
-  so the **trigger** is a direct minimal chat completion to
-  `…/api/coding/paas/v4/chat/completions` rather than a shell-out.
 
 Claude/Codex tokens are reused from the official tools (no separate login) and
-refreshed on 401. GLM uses a static API key (from config or env) — see below.
+refreshed on 401.
 
 ## Install
 
@@ -144,7 +138,7 @@ go build -o bin/limitping ./cmd/limitping
 ```
 
 Each provider you enable needs its own credentials: the `claude` / `codex` CLIs
-logged in (Claude / Codex), or a Coding Plan API key (GLM).
+logged in.
 
 ## Usage
 
@@ -155,11 +149,12 @@ limitping status -v            # also print raw JSON
 limitping ping                 # trigger all enabled providers now (alias: p)
 limitping ping claude          # Claude only
 limitping ping codex           # Codex only
-limitping ping glm             # GLM only
 limitping ping --dry-run       # show the commands without sending
 limitping watch                # foreground daemon: ping each window at reset (alias: w)
-limitping watch claude         # watch only one provider (claude|codex|glm)
+limitping watch claude         # watch only one provider (claude|codex)
 limitping watch --dry-run      # log when pings would fire, without sending
+limitping hooks install        # install active-session detection hooks (claude|codex|all)
+limitping hooks uninstall      # remove those hooks
 limitping version              # print the version (aliases: v, ver)
 limitping upgrade              # update to the latest GitHub release (aliases: up, update)
 limitping uninstall            # remove limitping plus config/cache (aliases: rm, remove)
@@ -185,8 +180,8 @@ Short aliases are also available for config commands: `limitping c i` for
 | `uninstall` | `rm`, `remove` |
 
 `ping` shows the exact command, a live timer (a spinner on a terminal), the
-**token usage** the ping consumed where available (parsed from `codex --json` or
-the GLM API response), and a **USD cost** where available:
+**token usage** the ping consumed where available (parsed from `codex --json`),
+and a **USD cost** where available:
 
 ```
 claude  → claude --model haiku .
@@ -205,8 +200,6 @@ Cost sources:
   The dataset is cached at `~/.config/limitping/litellm_prices.json` (24h TTL),
   with model-alias/date-suffix fallbacks. Requires `[codex].model` to be set so
   the rate can be looked up.
-- **GLM** is a per-prompt subscription, so no per-call USD cost is shown — only
-  the token count.
 
 Claude triggering still consumes a small amount of Claude subscription quota,
 but the interactive CLI does not expose the exact per-ping token count.
@@ -246,14 +239,6 @@ model            = "gpt-5.4-mini"  # cheapest Codex model for triggering
 reasoning_effort = "low"  # "minimal" is rejected when web_search/image_gen tools are enabled
 extra_args       = []
 align_start      = ""
-
-[glm]
-enabled  = false          # opt-in: enable once you have a plan + API key
-prompt   = "ok"
-model    = "glm-4.6"      # cheapest standard model; flagship GLM-5/5.1 cost a multiplier
-platform = "global"       # "global" = api.z.ai, "cn" = open.bigmodel.cn (Zhipu)
-api_key  = ""             # empty = read from $ZAI_API_KEY (global) / $ZHIPU_API_KEY (cn)
-align_start = ""
 ```
 
 Top-level keys:
@@ -275,32 +260,35 @@ your budget:
 - **Claude → `haiku`**: also avoids the separate weekly Opus bucket.
 - **Codex → `gpt-5.4-mini`**: the mini variant (see `~/.codex/models_cache.json`
   for what your plan offers).
-- **GLM → `glm-4.6`**: a standard model; the flagship GLM-5/5.1 deduct quota at a
-  2–3× multiplier, so avoid them for a mere trigger.
 
 Claude/Codex don't expose per-model prices at runtime (Anthropic's local cost
 cache is empty; Codex's model cache has no price field), so the cheapest model is
 a sensible default rather than a live price lookup. Override `model` per provider
 if you prefer.
 
-### GLM (Zhipu / Z.ai Coding Plan)
+### Active-session detection (hooks)
 
-GLM uses the same **5h + weekly** structure as Claude/Codex, but two things
-differ:
+At a window reset, `watch` avoids pinging while you're actively working — that
+turn would start the next window on its own. By default this falls back to
+scanning the process list, which can't tell an idle-but-open session from a busy
+one. Installing **CLI hooks** gives true mid-turn detection instead:
 
-- **Auth is a static API key**, not OAuth. Put it in `[glm].api_key`, or leave it
-  empty and export `ZAI_API_KEY` (global) / `ZHIPU_API_KEY` (CN). Usage reads hit
-  `…/api/monitor/usage/quota/limit`; the key goes in the `Authorization` header
-  **without** a `Bearer` prefix (that's how the endpoint expects it).
-- **The trigger is a direct API call**, because GLM has no standalone CLI. It
-  sends a one-token chat completion to `…/api/coding/paas/v4/chat/completions`.
+```sh
+limitping hooks install        # both providers (or: limitping hooks install claude)
+```
 
-> [!WARNING]
-> **Unverified on a live plan.** GLM is off by default. The endpoint shapes come
-> from community plugins; confirm on your own plan that (a) the monitor endpoint
-> returns your real 5h/weekly windows and (b) the 5h window is anchored to your
-> first message (so pinging at reset actually fills a gap). If GLM's window is a
-> fixed clock or per-request sliding window, the ping won't help.
+This registers limitping's hooks in `~/.claude/settings.json` and
+`~/.codex/hooks.json` (your existing settings are preserved; a `.bak` backup is
+written). The hooks invoke the hidden `limitping hook <provider>` command on
+`UserPromptSubmit` / `PreToolUse` / `PostToolUse` / `Stop` (Claude also
+`SessionEnd`) to record whether a session is mid-turn under
+`~/.config/limitping/activity/`.
+
+> [!NOTE]
+> Both CLIs gate custom command hooks behind a one-time trust step: after
+> installing, run `/hooks` inside Claude Code and Codex once to review and trust
+> them. Remove everything later with `limitping hooks uninstall` (also done
+> automatically by `limitping uninstall`).
 
 ## Run `watch` in the background (macOS, optional)
 
@@ -349,12 +337,13 @@ launchctl load ~/Library/LaunchAgents/com.limitping.watch.plist
 cmd/limitping            CLI entry
 internal/config          TOML config
 internal/usage           normalized usage model
-internal/auth            Claude (Keychain) + Codex (auth.json) tokens; GLM API key
-internal/provider        per-provider ReadUsage (endpoint) + Trigger (CLI / API)
+internal/auth            Claude (Keychain) + Codex (auth.json) tokens
+internal/provider        per-provider ReadUsage (endpoint) + Trigger (CLI)
+internal/activity        hook-based active-session state (shared by the hook cmd + scheduler)
 internal/pricing         LiteLLM-based USD cost lookup (Codex)
 internal/scheduler       the watch engine (sleep-until-reset, weekly-respect, backoff)
 internal/notify          macOS osascript notifications
-internal/cli             cobra commands: status, ping, watch, config, upgrade, uninstall, version
+internal/cli             cobra commands: status, ping, watch, config, hooks, upgrade, uninstall, version
 ```
 
 ## Contributing

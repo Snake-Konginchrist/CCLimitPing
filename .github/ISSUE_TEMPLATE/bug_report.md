@@ -21,7 +21,7 @@ labels: bug
 
 - OS:
 - `limitping version`:
-- Provider: claude / codex / glm / all
+- Provider: claude / codex / all
 - Install method: release binary / Homebrew / go install / source build
 
 ## Logs or output

@@ -10,7 +10,6 @@ Depending on the providers you enable, `limitping` may read:
 - Claude Code OAuth credentials from the macOS Keychain or
   `~/.claude/.credentials.json`
 - Codex OAuth credentials from `~/.codex/auth.json` or `$CODEX_HOME/auth.json`
-- A GLM API key from `~/.config/limitping/config.toml` or environment variables
 - Your `limitping` configuration from `~/.config/limitping/config.toml`
 - Provider usage responses used to calculate reset times
 
@@ -28,7 +27,6 @@ The tool may write:
 
 - Anthropic Claude Code OAuth and usage endpoints
 - ChatGPT/Codex OAuth and usage endpoints
-- Z.ai or Zhipu GLM usage and chat-completion endpoints, when GLM is enabled
 - GitHub releases, when using `install.sh`
 - The LiteLLM pricing dataset on GitHub, for Codex equivalent API-cost estimates
 
@@ -40,7 +38,7 @@ The tool does not send provider credentials to unrelated services.
 account metadata and avoid posting it publicly.
 
 `ping --dry-run` and `watch --dry-run` print planned commands without sending
-provider requests. GLM dry-run output redacts the API key.
+provider requests.
 
 ## Data Retention
 
@@ -51,7 +49,5 @@ logs you choose to keep.
 ## User Controls
 
 - Disable a provider in `~/.config/limitping/config.toml`
-- Keep `[glm].api_key` empty and provide GLM credentials through environment
-  variables instead
 - Delete `~/.config/limitping/litellm_prices.json` to remove the pricing cache
 - Run `watch --dry-run` to verify scheduling behavior without sending pings

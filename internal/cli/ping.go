@@ -22,7 +22,7 @@ func newPingCmd() *cobra.Command {
 		Short:     text.pingShort,
 		Long:      text.pingLong,
 		Args:      cobra.MatchAll(cobra.MaximumNArgs(1), cobra.OnlyValidArgs),
-		ValidArgs: []string{"claude", "codex", "glm", "all"},
+		ValidArgs: []string{"claude", "codex", "all"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			name := "all"
 			if len(args) > 0 {

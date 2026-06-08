@@ -28,9 +28,8 @@ func (d Duration) MarshalText() ([]byte, error) {
 	return []byte(d.Duration.String()), nil
 }
 
-// ProviderConfig holds the per-provider knobs. Some fields are provider-specific
-// and ignored elsewhere: ReasoningEffort applies only to Codex; APIKey/Platform
-// apply only to GLM.
+// ProviderConfig holds the per-provider knobs. ReasoningEffort applies only to
+// Codex and is ignored by Claude.
 type ProviderConfig struct {
 	Enabled         bool     `toml:"enabled"`
 	Prompt          string   `toml:"prompt"`
@@ -38,8 +37,6 @@ type ProviderConfig struct {
 	Model           string   `toml:"model"`
 	ReasoningEffort string   `toml:"reasoning_effort"`
 	AlignStart      string   `toml:"align_start"`
-	APIKey          string   `toml:"api_key"`  // GLM only; empty = read from env
-	Platform        string   `toml:"platform"` // GLM only; "global" or "cn"
 }
 
 // Config is the full configuration.
@@ -55,7 +52,6 @@ type Config struct {
 
 	Claude ProviderConfig `toml:"claude"`
 	Codex  ProviderConfig `toml:"codex"`
-	GLM    ProviderConfig `toml:"glm"`
 }
 
 // Default returns the built-in defaults used when no config file exists.
@@ -75,12 +71,6 @@ func Default() Config {
 			Prompt:          "ok",
 			Model:           "gpt-5.4-mini",
 			ReasoningEffort: "low",
-		},
-		GLM: ProviderConfig{
-			Enabled:  false,
-			Prompt:   "ok",
-			Model:    "glm-4.6",
-			Platform: "global",
 		},
 	}
 }
@@ -195,21 +185,5 @@ model = "gpt-5.4-mini"
 # tools are enabled in your Codex config.
 reasoning_effort = "low"
 extra_args = []
-align_start = ""
-
-[glm]
-# GLM (Zhipu / Z.ai) Coding Plan. Disabled by default — enable once you have a
-# plan + API key. GLM has no standalone CLI, so the ping is a direct minimal
-# chat completion. Verify on a live plan that the 5h window is anchored to your
-# first message (so pinging at reset actually helps).
-enabled = false
-prompt = "ok"
-# Cheapest standard model for triggering; flagship GLM-5/5.1 burn quota at a
-# multiplier. Override to a model your plan offers.
-model = "glm-4.6"
-# "global" = api.z.ai, "cn" = open.bigmodel.cn (Zhipu).
-platform = "global"
-# API key. Leave empty to read from $ZAI_API_KEY (global) / $ZHIPU_API_KEY (cn).
-api_key = ""
 align_start = ""
 `

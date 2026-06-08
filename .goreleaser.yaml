@@ -73,7 +73,7 @@ homebrew_casks:
       token: '{{ index .Env "HOMEBREW_TAP_GITHUB_TOKEN" }}'
     skip_upload: '{{ if index .Env "HOMEBREW_TAP_GITHUB_TOKEN" }}false{{ else }}true{{ end }}'
     homepage: "https://github.com/wavever/CCLimitPing"
-    description: "Keep Claude Code / Codex / GLM rate-limit windows back-to-back"
+    description: "Keep Claude Code / Codex rate-limit windows back-to-back"
     # Unsigned binary: strip the macOS quarantine flag on install so it runs.
     hooks:
       post:

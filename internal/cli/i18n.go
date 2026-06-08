@@ -127,7 +127,7 @@ Use "{{.CommandPath}} [command] --help" for more information about a command.{{e
 	pingLong: `Trigger a rate-limit window immediately by sending the minimal message for the selected provider.
 
 Arguments:
-  provider  Optional. One of: claude, codex, glm, all.
+  provider  Optional. One of: claude, codex, all.
             Defaults to all, which pings every enabled provider.
 
 Examples:
@@ -140,7 +140,7 @@ Examples:
 	watchLong: `Run the foreground daemon. When a provider's 5h window resets, limitping sends the minimal message to start the next window.
 
 Arguments:
-  provider  Optional. One of: claude, codex, glm, all.
+  provider  Optional. One of: claude, codex, all.
             Defaults to all, which watches every enabled provider.
 
 Examples:
@@ -217,7 +217,7 @@ var zhText = cliText{
 	pingLong: `通过向指定 Provider 发送最小消息，立即触发一个限额窗口。
 
 参数:
-  provider  可选。取值: claude、codex、glm、all。
+  provider  可选。取值: claude、codex、all。
             默认是 all，会 ping 所有已启用的 Provider。
 
 示例:
@@ -230,7 +230,7 @@ var zhText = cliText{
 	watchLong: `以前台守护方式运行。某个 Provider 的 5h 窗口重置后，limitping 会发送最小消息来开启下一个窗口。
 
 参数:
-  provider  可选。取值: claude、codex、glm、all。
+  provider  可选。取值: claude、codex、all。
             默认是 all，会监测所有已启用的 Provider。
 
 示例:
