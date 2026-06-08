@@ -11,11 +11,17 @@ through GitHub Actions and GoReleaser.
 
 ## v0.4.0
 
+- Fixed the Claude trigger: the interactive session now actually submits the
+  prompt (and waits for the turn to run) instead of exiting before any message
+  was sent, so the 5h window reliably starts.
 - Added hook-based active-session detection: `limitping hooks install` /
   `uninstall` registers limitping's hooks in `~/.claude/settings.json` and
   `~/.codex/hooks.json` so `watch` can tell when a session is genuinely mid-turn
-  (between a prompt and its `Stop`) rather than just having a live process. Falls
-  back to the previous process scan when hooks aren't installed.
+  (between a prompt and its `Stop`) rather than just having a live process. The
+  install script sets the hooks up automatically. Without hooks, `limitping`
+  skips the active-session check and pings as soon as the window resets — there
+  is no process-list fallback (it produced false positives from unrelated
+  Claude/Codex agent processes).
 - Removed the experimental GLM (Zhipu / Z.ai) provider. `limitping` now targets
   Claude Code and Codex only; the `[glm]` config block and `glm` provider
   argument are gone.

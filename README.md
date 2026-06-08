@@ -68,9 +68,10 @@ Two cleanly separated jobs:
 When `watch` sees a 5h window has reset, it first checks whether a Claude/Codex
 session is actively mid-turn. If one is, `limitping` waits and re-reads usage
 instead of sending its own ping, because that session's next model request will
-start the new window naturally. With [hooks installed](#active-session-detection-hooks)
-this is true mid-turn detection; otherwise it falls back to scanning for a
-running CLI process.
+start the new window naturally. This check relies on the
+[CLI hooks](#active-session-detection-hooks) (installed automatically by the
+install script); without them, `limitping` skips the check and pings as soon as
+the window resets.
 
 - **Claude**: reads `GET https://api.anthropic.com/api/oauth/usage` using the
   OAuth token from the macOS Keychain (`Claude Code-credentials`) or
@@ -269,9 +270,12 @@ if you prefer.
 ### Active-session detection (hooks)
 
 At a window reset, `watch` avoids pinging while you're actively working — that
-turn would start the next window on its own. By default this falls back to
-scanning the process list, which can't tell an idle-but-open session from a busy
-one. Installing **CLI hooks** gives true mid-turn detection instead:
+turn would start the next window on its own. This relies on **CLI hooks**, which
+the install script sets up for you. If they aren't installed, `limitping` skips
+the check entirely and pings right at reset (it never guesses from the process
+list).
+
+The install script runs this automatically; to (re)install manually:
 
 ```sh
 limitping hooks install        # both providers (or: limitping hooks install claude)
@@ -285,10 +289,10 @@ written). The hooks invoke the hidden `limitping hook <provider>` command on
 `~/.config/limitping/activity/`.
 
 > [!NOTE]
-> Both CLIs gate custom command hooks behind a one-time trust step: after
-> installing, run `/hooks` inside Claude Code and Codex once to review and trust
-> them. Remove everything later with `limitping hooks uninstall` (also done
-> automatically by `limitping uninstall`).
+> Claude Code loads its hooks automatically — nothing to do there. **Codex**
+> gates custom command hooks behind a one-time trust step: run `/hooks` inside
+> Codex once to enable them. Remove everything later with
+> `limitping hooks uninstall` (also done automatically by `limitping uninstall`).
 
 ## Run `watch` in the background (macOS, optional)
 

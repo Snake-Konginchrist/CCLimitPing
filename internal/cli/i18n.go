@@ -49,7 +49,7 @@ type cliText struct {
 	hooksInstalledFmt   string
 	hooksRemovedFmt     string
 	hooksNothingFmt     string
-	hooksTrustNote      string
+	hooksTrustCodex     string
 
 	upgradeShort string
 	upgradeLong  string
@@ -168,14 +168,14 @@ Examples:
 	hooksShort: "Manage Claude/Codex hooks for accurate active-session detection",
 	hooksLong: `Manage the hooks that let limitping tell whether a Claude Code or Codex session is actually mid-turn (rather than merely running).
 
-When installed, limitping defers its ping while you're actively working and resumes once the turn ends. Without hooks it falls back to scanning the process list, which can't distinguish an idle-but-open session from a busy one.`,
+When installed, limitping defers its ping while you're actively working and resumes once the turn ends. Without hooks limitping skips this check and pings as soon as the window resets. The install script sets these hooks up automatically.`,
 	hooksInstallShort: "Register limitping's hooks in the Claude/Codex configs",
 	hooksInstallLong: `Register limitping's hooks in ~/.claude/settings.json and ~/.codex/hooks.json (existing settings are preserved; a .bak backup is written).
 
 Arguments:
   provider  Optional. One of: claude, codex, all. Defaults to all.
 
-After installing, run /hooks inside Claude Code and Codex once to review and trust the new hooks.
+Claude Code loads its hooks automatically. Codex requires a one-time trust: run /hooks inside Codex to enable them.
 
 Examples:
   limitping hooks install
@@ -192,7 +192,7 @@ Examples:
 	hooksInstalledFmt: "Installed %s hooks → %s\n",
 	hooksRemovedFmt:   "Removed %s hooks from %s\n",
 	hooksNothingFmt:   "No %s hooks found in %s\n",
-	hooksTrustNote:    "\nNext: run /hooks inside Claude Code and Codex once to review and trust the new hooks.\n",
+	hooksTrustCodex:   "\nCodex requires a one-time trust: run /hooks inside Codex to enable the new hooks.\n(Claude Code loads its hooks automatically — nothing to do there.)\n",
 
 	upgradeShort: "Upgrade limitping to the latest release",
 	upgradeLong:  "Download the latest GitHub release for this OS/architecture and replace the currently running limitping binary.",
@@ -287,14 +287,14 @@ var zhText = cliText{
 	hooksShort: "管理 Claude/Codex 钩子，精确判断会话是否正在运行",
 	hooksLong: `管理用于判断 Claude Code 或 Codex 会话是否真正处于对话进行中（而非仅仅进程存在）的钩子。
 
-安装后，limitping 会在你正在使用时推迟 ping，并在一轮对话结束后恢复。未安装钩子时，会退回到扫描进程列表的方式，而这无法区分「打开但空闲」和「正忙」的会话。`,
+安装后，limitping 会在你正在使用时推迟 ping，并在一轮对话结束后恢复。未安装钩子时，limitping 会跳过该检查，窗口一重置就直接 ping。安装脚本会自动装好这些钩子。`,
 	hooksInstallShort: "在 Claude/Codex 配置中注册 limitping 的钩子",
 	hooksInstallLong: `在 ~/.claude/settings.json 和 ~/.codex/hooks.json 中注册 limitping 的钩子（保留已有配置，并写入 .bak 备份）。
 
 参数:
   provider  可选。取值: claude、codex、all。默认是 all。
 
-安装后，请在 Claude Code 和 Codex 中各运行一次 /hooks，以审阅并信任新钩子。
+Claude Code 会自动加载钩子；Codex 需要一次性信任：在 Codex 中运行 /hooks 启用它们。
 
 示例:
   limitping hooks install
@@ -311,7 +311,7 @@ var zhText = cliText{
 	hooksInstalledFmt: "已安装 %s 钩子 → %s\n",
 	hooksRemovedFmt:   "已从 %s 移除钩子: %s\n",
 	hooksNothingFmt:   "%s 中未找到钩子: %s\n",
-	hooksTrustNote:    "\n下一步: 在 Claude Code 和 Codex 中各运行一次 /hooks，审阅并信任新钩子。\n",
+	hooksTrustCodex:   "\nCodex 需要一次性信任：在 Codex 中运行 /hooks 启用新钩子。\n（Claude Code 会自动加载，无需操作。）\n",
 
 	upgradeShort: "将 limitping 更新到最新版本",
 	upgradeLong:  "下载适用于当前系统和架构的最新 GitHub Release，并替换正在运行的 limitping 二进制文件。",

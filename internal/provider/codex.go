@@ -31,15 +31,14 @@ func NewCodex(cfg config.ProviderConfig) *Codex {
 
 func (c *Codex) Name() string { return "codex" }
 
-func (c *Codex) ActiveTask(ctx context.Context) (string, bool, error) {
-	// Prefer the hook-based signal (true mid-turn detection) when installed;
-	// otherwise fall back to scanning for a running CLI process.
-	if activity.Enabled("codex") {
-		return activity.Active("codex")
+func (c *Codex) ActiveTask(_ context.Context) (string, bool, error) {
+	// Active-session detection relies entirely on the CLI hooks (see `limitping
+	// hooks install`). Without them we don't guess from the process list — the
+	// scheduler just pings.
+	if !activity.Enabled("codex") {
+		return "", false, nil
 	}
-	return activeCLIProcess(ctx,
-		[]string{"codex"},
-		[]string{"@openai/codex"})
+	return activity.Active("codex")
 }
 
 type codexWindow struct {

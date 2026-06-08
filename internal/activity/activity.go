@@ -113,7 +113,10 @@ func Active(provider string) (string, bool, error) {
 			continue
 		}
 		session := strings.TrimSuffix(e.Name(), ".json")
-		return fmt.Sprintf("session %s active", session), true, nil
+		if len(session) > 8 {
+			session = session[:8]
+		}
+		return fmt.Sprintf("session %s", session), true, nil
 	}
 	return "", false, nil
 }

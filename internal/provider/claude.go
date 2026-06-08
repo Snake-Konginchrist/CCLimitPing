@@ -55,15 +55,14 @@ func NewClaude(cfg config.ProviderConfig) *Claude {
 
 func (c *Claude) Name() string { return "claude" }
 
-func (c *Claude) ActiveTask(ctx context.Context) (string, bool, error) {
-	// Prefer the hook-based signal (true mid-turn detection) when installed;
-	// otherwise fall back to scanning for a running CLI process.
-	if activity.Enabled("claude") {
-		return activity.Active("claude")
+func (c *Claude) ActiveTask(_ context.Context) (string, bool, error) {
+	// Active-session detection relies entirely on the CLI hooks (see `limitping
+	// hooks install`). Without them we don't guess from the process list — the
+	// scheduler just pings.
+	if !activity.Enabled("claude") {
+		return "", false, nil
 	}
-	return activeCLIProcess(ctx,
-		[]string{"claude"},
-		[]string{"claude-code", "@anthropic-ai/claude"})
+	return activity.Active("claude")
 }
 
 type claudeWindow struct {

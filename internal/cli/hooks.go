@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -90,8 +91,10 @@ func runHooks(out io.Writer, name string, install bool) error {
 		}
 	}
 
-	if install {
-		fmt.Fprint(out, text.hooksTrustNote)
+	// Only Codex gates command hooks behind a one-time /hooks trust; Claude Code
+	// loads them automatically.
+	if install && slices.Contains(providers, "codex") {
+		fmt.Fprint(out, text.hooksTrustCodex)
 	}
 	return nil
 }

@@ -66,4 +66,25 @@ case ":$PATH:" in
     ;;
 esac
 
+# Install active-session detection hooks for whichever provider CLIs are set up.
+# limitping only defers a ping while you're mid-turn when these hooks are present;
+# without them it pings as soon as the window resets, without checking.
+hooked=""
+for p in claude codex; do
+  if [ -d "$HOME/.$p" ] && "$dir/$BIN" hooks install "$p" >/dev/null 2>&1; then
+    hooked="${hooked:+$hooked, }$p"
+  fi
+done
+if [ -n "$hooked" ]; then
+  echo
+  echo "Installed active-session hooks for: $hooked"
+  case "$hooked" in
+    *codex*) echo "  Codex needs a one-time trust: run /hooks inside Codex. (Claude loads automatically.)" ;;
+  esac
+else
+  echo
+  echo "NOTE: no Claude/Codex config found yet — run 'limitping hooks install'"
+  echo "  after setting them up to enable active-session detection."
+fi
+
 "$dir/$BIN" version 2>/dev/null || true
