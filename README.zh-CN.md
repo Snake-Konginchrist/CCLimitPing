@@ -43,7 +43,7 @@ curl -fsSL https://raw.githubusercontent.com/wavever/CCLimitPing/main/install.sh
 limitping config init
 limitping status
 limitping ping --dry-run
-limitping watch                # 前台运行(Ctrl-C 停止)
+limitping watch                # 前台低功耗运行(Ctrl-C 停止)
 # ...或在后台运行,释放终端:
 limitping bg start
 limitping bg status
@@ -152,6 +152,7 @@ limitping ping codex           # 只触发 Codex
 limitping ping --dry-run       # 只打印将执行的命令,不真正发送
 limitping watch                # 前台守护:在每个窗口重置时自动 ping(简称: w)
 limitping watch claude         # 只监测某一个 Provider(claude|codex)
+limitping watch --live         # 可选:显示实时心电图状态行
 limitping watch --dry-run      # 只记录何时会触发,不真正发送
 limitping bg start             # 在后台运行 watch,释放终端
 limitping bg status            # 是否在运行?并列出各 Provider 用量(等同于 limitping bg)
@@ -286,8 +287,9 @@ limitping bg logs -f        # 持续查看日志(-n N 查看最后 N 行)
 limitping bg stop           # 停止
 ```
 
+`watch` 默认使用低功耗日志输出;如果需要前台实时心电图状态行,可加 `--live`。
 `bg start` 支持与 `watch` 相同的可选 `[provider]` 参数和 `--dry-run` 选项。同一时间只会
-运行一个后台监听,其输出写入 `~/.config/limitping/bg.log`(遵循 `$XDG_CONFIG_HOME`)。该进程
+运行一个监听(前台或后台),后台输出写入 `~/.config/limitping/bg.log`(遵循 `$XDG_CONFIG_HOME`)。该进程
 会脱离到独立会话,关闭终端后依然存活——但**开机不会自启**。
 
 如需在 macOS 上**开机自启**,请改用 `launchd` 服务。创建

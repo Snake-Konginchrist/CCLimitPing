@@ -51,7 +51,7 @@ curl -fsSL https://raw.githubusercontent.com/wavever/CCLimitPing/main/install.sh
 limitping config init
 limitping status
 limitping ping --dry-run
-limitping watch                # foreground (Ctrl-C to stop)
+limitping watch                # foreground, low-power (Ctrl-C to stop)
 # ...or run it in the background, freeing your terminal:
 limitping bg start
 limitping bg status
@@ -168,6 +168,7 @@ limitping ping codex           # Codex only
 limitping ping --dry-run       # show the commands without sending
 limitping watch                # foreground daemon: ping each window at reset (alias: w)
 limitping watch claude         # watch only one provider (claude|codex)
+limitping watch --live         # optional live heartbeat/status line
 limitping watch --dry-run      # log when pings would fire, without sending
 limitping bg start             # run watch in the background, freeing the terminal
 limitping bg status            # running? + each watched provider's usage (alias: limitping bg)
@@ -316,8 +317,10 @@ limitping bg logs -f        # follow the watcher's log (-n N for last N lines)
 limitping bg stop           # stop it
 ```
 
-`bg start` takes the same optional `[provider]` argument and `--dry-run` flag as
-`watch`. Only one background watcher runs at a time, and its output is written to
+`watch` defaults to low-power log output. Add `--live` if you want a foreground
+heartbeat/status line. `bg start` takes the same optional `[provider]` argument
+and `--dry-run` flag as `watch`. Only one watcher (foreground or background) runs
+at a time, and background output is written to
 `~/.config/limitping/bg.log` (honors `$XDG_CONFIG_HOME`). The process detaches
 into its own session, so it survives the shell closing — but it does **not**
 restart on reboot.

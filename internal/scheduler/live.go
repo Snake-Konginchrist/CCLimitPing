@@ -29,7 +29,7 @@ var heartbeatFrames = []string{
 
 const (
 	heartbeatFrameWidth = 9
-	liveTick            = 250 * time.Millisecond
+	liveTick            = time.Second
 	ansiDim             = "\033[2m"
 	ansiCyan            = "\033[36m"
 	ansiReset           = "\033[0m"
@@ -62,8 +62,8 @@ type liveItem struct {
 	deadline time.Time // zero = no countdown shown
 }
 
-func newLiveStatus(out io.Writer, names []string) *liveStatus {
-	enabled := isTerminalWriter(out) && os.Getenv("TERM") != "dumb"
+func newLiveStatus(out io.Writer, names []string, requested bool) *liveStatus {
+	enabled := requested && isTerminalWriter(out) && os.Getenv("TERM") != "dumb"
 	return &liveStatus{
 		out:     out,
 		enabled: enabled,
@@ -76,6 +76,9 @@ func newLiveStatus(out io.Writer, names []string) *liveStatus {
 // set updates a provider's state and optional countdown deadline. Safe to call
 // from any target goroutine; a no-op visually when the status line is disabled.
 func (l *liveStatus) set(name, state string, deadline time.Time) {
+	if !l.enabled {
+		return
+	}
 	l.mu.Lock()
 	l.items[name] = liveItem{state: state, deadline: deadline}
 	l.mu.Unlock()
@@ -201,9 +204,9 @@ func humanCountdown(d time.Duration) string {
 	case days > 0:
 		return fmt.Sprintf("%dd%dh", days, h)
 	case h > 0:
-		return fmt.Sprintf("%dh%02dm%02ds", h, m, s)
+		return fmt.Sprintf("%dh%02dm", h, m)
 	case m > 0:
-		return fmt.Sprintf("%dm%02ds", m, s)
+		return fmt.Sprintf("%dm", m)
 	default:
 		return fmt.Sprintf("%ds", s)
 	}

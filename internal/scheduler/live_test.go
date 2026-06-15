@@ -15,8 +15,8 @@ func TestHumanCountdown(t *testing.T) {
 		{-time.Second, "0s"},
 		{0, "0s"},
 		{5 * time.Second, "5s"},
-		{90 * time.Second, "1m30s"},
-		{2*time.Hour + 3*time.Minute + 4*time.Second, "2h03m04s"},
+		{90 * time.Second, "1m"},
+		{2*time.Hour + 3*time.Minute + 4*time.Second, "2h03m"},
 		{49 * time.Hour, "2d1h"},
 	}
 	for _, c := range cases {
@@ -66,7 +66,7 @@ func TestHeartbeatFramesAreFixedWidthASCII(t *testing.T) {
 // pass-through: log bytes go out verbatim with no ANSI control sequences.
 func TestLiveStatusDisabledPassthrough(t *testing.T) {
 	var buf bytes.Buffer
-	l := newLiveStatus(&buf, []string{"claude"})
+	l := newLiveStatus(&buf, []string{"claude"}, false)
 	if l.enabled {
 		t.Fatal("expected liveStatus disabled for a non-terminal writer")
 	}

@@ -31,9 +31,11 @@ type cliText struct {
 	pingLong       string
 	pingDryRunFlag string
 
-	watchShort      string
-	watchLong       string
-	watchDryRunFlag string
+	watchShort             string
+	watchLong              string
+	watchDryRunFlag        string
+	watchLiveFlag          string
+	watchAlreadyRunningFmt string
 
 	bgShort          string
 	bgLong           string
@@ -192,8 +194,11 @@ Arguments:
 Examples:
   limitping watch
   limitping w claude
+  limitping watch --live
   limitping watch --dry-run`,
-	watchDryRunFlag: "log when pings would fire without sending them",
+	watchDryRunFlag:        "log when pings would fire without sending them",
+	watchLiveFlag:          "show a live heartbeat/status line while watching (uses more power)",
+	watchAlreadyRunningFmt: "watch already running (pid %d, provider %s%s, started %s); stop it before starting another watcher",
 
 	bgShort: "Run watch in the background — start | stop | status | logs",
 	bgLong: `Run the watch daemon detached from the terminal so it keeps pinging across 5h windows after you close the shell.
@@ -204,7 +209,7 @@ Subcommands:
   status             show whether it's running (this is also what bare 'bg' prints)
   logs               show its log output (-f to follow, -n N for the last N lines)
 
-Only one background watcher runs at a time. The process detaches into its own session, so it survives the terminal closing — but it does not restart on reboot (use a launchd/systemd agent for start-at-login).`,
+Only one watcher runs at a time, foreground or background. The background process detaches into its own session, so it survives the terminal closing — but it does not restart on reboot (use a launchd/systemd agent for start-at-login).`,
 	bgExample:    "  limitping bg start          # start in the background\n  limitping bg start codex    # only Codex\n  limitping bg status         # is it running?  (same as: limitping bg)\n  limitping bg logs -f        # follow the log\n  limitping bg stop           # stop it",
 	bgStartShort: "Start watch as a background process",
 	bgStartLong: `Launch the watch daemon in the background (detached from the terminal) and return immediately, freeing your shell. Output goes to a log file under the config directory.
@@ -362,8 +367,11 @@ var zhText = cliText{
 示例:
   limitping watch
   limitping w claude
+  limitping watch --live
   limitping watch --dry-run`,
-	watchDryRunFlag: "只记录何时会触发，不真正发送",
+	watchDryRunFlag:        "只记录何时会触发，不真正发送",
+	watchLiveFlag:          "显示实时心电图状态行（会增加耗电）",
+	watchAlreadyRunningFmt: "watch 已在运行（pid %d，Provider %s%s，启动于 %s）；请先停止已有 watcher 再启动新的",
 
 	bgShort: "在后台运行 watch —— start | stop | status | logs",
 	bgLong: `以脱离终端的方式在后台运行 watch 守护进程，关闭终端后仍会在每个 5h 窗口重置时持续 ping。
@@ -374,7 +382,7 @@ var zhText = cliText{
   status             查看是否在运行（直接运行 bg 也是这个）
   logs               查看日志（-f 持续跟踪，-n N 查看最后 N 行）
 
-同一时间只会运行一个后台监听。该进程会脱离到独立会话，关闭终端后依然存活——但开机不会自启（如需开机自启，请使用 launchd/systemd 等服务）。`,
+同一时间只会运行一个监听（前台或后台）。后台进程会脱离到独立会话，关闭终端后依然存活——但开机不会自启（如需开机自启，请使用 launchd/systemd 等服务）。`,
 	bgExample:    "  limitping bg start          # 在后台启动\n  limitping bg start codex    # 只监测 Codex\n  limitping bg status         # 是否在运行?(等同于 limitping bg)\n  limitping bg logs -f        # 持续查看日志\n  limitping bg stop           # 停止",
 	bgStartShort: "以后台进程方式启动 watch",
 	bgStartLong: `在后台（脱离终端）启动 watch 守护进程并立即返回，释放当前终端。输出会写入配置目录下的日志文件。

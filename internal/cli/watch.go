@@ -14,6 +14,7 @@ import (
 
 func newWatchCmd() *cobra.Command {
 	var dryRun bool
+	var live bool
 	text := localizedText()
 	cmd := &cobra.Command{
 		Use:       "watch [provider]",
@@ -35,15 +36,21 @@ func newWatchCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			release, err := acquireWatchLock(name, dryRun)
+			if err != nil {
+				return err
+			}
+			defer release()
 
 			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer stop()
 
-			s := scheduler.New(cfg, targets, dryRun, cmd.OutOrStdout())
+			s := scheduler.New(cfg, targets, dryRun, live, cmd.OutOrStdout())
 			s.Run(ctx)
 			return nil
 		},
 	}
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, text.watchDryRunFlag)
+	cmd.Flags().BoolVar(&live, "live", false, text.watchLiveFlag)
 	return cmd
 }

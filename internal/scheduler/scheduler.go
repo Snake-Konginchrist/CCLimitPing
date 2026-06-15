@@ -1,8 +1,9 @@
 // Package scheduler runs the watch loop: for each provider it sleeps until the
 // 5h window resets, then triggers a minimal ping to start the next window,
 // keeping windows back-to-back. It respects the weekly limit and never lets a
-// transient error kill the loop. On an interactive terminal it also draws a live
-// status line (spinner + per-provider countdowns) beneath the scrolling log.
+// transient error kill the loop. When requested on an interactive terminal, it
+// also draws a live status line (heartbeat + per-provider countdowns) beneath
+// the scrolling log.
 package scheduler
 
 import (
@@ -27,7 +28,6 @@ const (
 	maxBackoff     = 10 * time.Minute
 	rateLimitPause = 5 * time.Minute
 	defaultWindow  = 5 * time.Hour // fallback when the API omits the window length
-	maxSleepChunk  = 30 * time.Minute
 	readTimeout    = 30 * time.Second
 	triggerTimeout = 3 * time.Minute
 	activeTaskPoll = time.Minute
@@ -48,21 +48,21 @@ type Scheduler struct {
 	live    *liveStatus
 }
 
-// New builds a scheduler that logs to out. When out is an interactive terminal,
-// a live status line (spinner + per-provider countdowns) is drawn beneath the
-// scrolling log; otherwise log output passes straight through.
-func New(cfg config.Config, targets []Target, dryRun bool, out io.Writer) *Scheduler {
+// New builds a scheduler that logs to out. When live is true and out is an
+// interactive terminal, a live status line is drawn beneath the scrolling log;
+// otherwise log output passes straight through.
+func New(cfg config.Config, targets []Target, dryRun, live bool, out io.Writer) *Scheduler {
 	names := make([]string, len(targets))
 	for i, t := range targets {
 		names[i] = t.Provider.Name()
 	}
-	live := newLiveStatus(out, names)
+	status := newLiveStatus(out, names, live)
 	return &Scheduler{
 		cfg:     cfg,
 		targets: targets,
 		dryRun:  dryRun,
-		log:     log.New(live, "", log.LstdFlags),
-		live:    live,
+		log:     log.New(status, "", log.LstdFlags),
+		live:    status,
 	}
 }
 
@@ -309,25 +309,17 @@ func usageRateLimitWait(retryAfter time.Time, now time.Time) time.Duration {
 	return rateLimitPause
 }
 
-// sleepCtx sleeps for d (in chunks, so long sleeps stay responsive to
-// cancellation) and reports false if the context was cancelled.
+// sleepCtx sleeps for d and reports false if the context was cancelled.
 func sleepCtx(ctx context.Context, d time.Duration) bool {
-	deadline := time.Now().Add(d)
-	for {
-		remaining := time.Until(deadline)
-		if remaining <= 0 {
-			return true
-		}
-		chunk := remaining
-		if chunk > maxSleepChunk {
-			chunk = maxSleepChunk
-		}
-		t := time.NewTimer(chunk)
-		select {
-		case <-ctx.Done():
-			t.Stop()
-			return false
-		case <-t.C:
-		}
+	if d <= 0 {
+		return true
+	}
+	t := time.NewTimer(d)
+	defer t.Stop()
+	select {
+	case <-ctx.Done():
+		return false
+	case <-t.C:
+		return true
 	}
 }

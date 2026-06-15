@@ -165,6 +165,9 @@ func runBgStart(out io.Writer, provider string, dryRun bool) error {
 	if st, ok := readBgState(); ok && processAlive(st.PID) {
 		return fmt.Errorf("background watch already running (pid %d); stop it first with `limitping bg stop`", st.PID)
 	}
+	if st, ok := activeWatchLock(); ok {
+		return watchAlreadyRunningError(st)
+	}
 
 	dir, err := config.Dir()
 	if err != nil {
