@@ -30,6 +30,9 @@ var heartbeatFrames = []string{
 const (
 	heartbeatFrameWidth = 9
 	liveTick            = time.Second
+	liveNearTick        = 30 * time.Second
+	liveFarTick         = time.Minute
+	liveVeryFarTick     = 5 * time.Minute
 	ansiDim             = "\033[2m"
 	ansiCyan            = "\033[36m"
 	ansiReset           = "\033[0m"
@@ -54,6 +57,8 @@ type liveStatus struct {
 	order []string // stable display order, one entry per target
 	frame int
 	drawn bool
+
+	updates chan struct{} // nudges the render loop when a target changes state
 }
 
 // liveItem is one provider's current state on the status line.
@@ -70,6 +75,7 @@ func newLiveStatus(out io.Writer, names []string, requested bool) *liveStatus {
 		color:   enabled && os.Getenv("NO_COLOR") == "",
 		items:   make(map[string]liveItem, len(names)),
 		order:   append([]string(nil), names...),
+		updates: make(chan struct{}, 1),
 	}
 }
 
@@ -81,7 +87,9 @@ func (l *liveStatus) set(name, state string, deadline time.Time) {
 	}
 	l.mu.Lock()
 	l.items[name] = liveItem{state: state, deadline: deadline}
+	l.drawLocked()
 	l.mu.Unlock()
+	l.signalUpdate()
 }
 
 // Write implements io.Writer for the scheduler's logger: it erases the status
@@ -106,15 +114,18 @@ func (l *liveStatus) run(ctx context.Context) {
 	if !l.enabled {
 		return
 	}
-	t := time.NewTicker(liveTick)
+	t := time.NewTimer(l.nextTickInterval())
 	defer t.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			l.clear()
 			return
+		case <-l.updates:
+			resetTimer(t, l.nextTickInterval())
 		case <-t.C:
 			l.tick()
+			t.Reset(l.nextTickInterval())
 		}
 	}
 }
@@ -124,6 +135,71 @@ func (l *liveStatus) tick() {
 	l.frame++
 	l.drawLocked()
 	l.mu.Unlock()
+}
+
+func (l *liveStatus) signalUpdate() {
+	if l.updates == nil {
+		return
+	}
+	select {
+	case l.updates <- struct{}{}:
+	default:
+	}
+}
+
+func (l *liveStatus) nextTickInterval() time.Duration {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return l.nextTickIntervalLocked(time.Now())
+}
+
+// nextTickIntervalLocked returns the next live redraw interval. It keeps
+// near-term activity responsive, but backs off to minute-scale redraws for the
+// common watch/background case where every provider is sleeping for hours.
+// The caller must hold l.mu.
+func (l *liveStatus) nextTickIntervalLocked(now time.Time) time.Duration {
+	next := liveVeryFarTick
+	seen := false
+	for _, name := range l.order {
+		it, ok := l.items[name]
+		if !ok || it.state == "" {
+			continue
+		}
+		seen = true
+		if it.deadline.IsZero() {
+			return liveTick
+		}
+		if d := tickIntervalForRemaining(it.deadline.Sub(now)); d < next {
+			next = d
+		}
+	}
+	if !seen {
+		return liveVeryFarTick
+	}
+	return next
+}
+
+func tickIntervalForRemaining(d time.Duration) time.Duration {
+	switch {
+	case d <= time.Minute:
+		return liveTick
+	case d <= time.Hour:
+		return liveNearTick
+	case d <= 24*time.Hour:
+		return liveFarTick
+	default:
+		return liveVeryFarTick
+	}
+}
+
+func resetTimer(t *time.Timer, d time.Duration) {
+	if !t.Stop() {
+		select {
+		case <-t.C:
+		default:
+		}
+	}
+	t.Reset(d)
 }
 
 func (l *liveStatus) clear() {

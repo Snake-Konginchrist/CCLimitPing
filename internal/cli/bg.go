@@ -23,6 +23,10 @@ const (
 	// bgPingHistoryLimit keeps `bg status` readable even after a long-running
 	// watcher has accumulated many window starts.
 	bgPingHistoryLimit = 10
+	// bgLogFollow polls sparingly while idle so `bg logs --follow` can be left
+	// open without a steady 2Hz wakeup when the daemon is sleeping for hours.
+	bgLogFollowInitialPoll = 500 * time.Millisecond
+	bgLogFollowMaxPoll     = 2 * time.Second
 )
 
 // The background command runs `watch` as a detached process so a 5h window chain
@@ -508,16 +512,24 @@ func printLastLines(out io.Writer, f *os.File, n int) error {
 // process is interrupted, like `tail -f`.
 func followFile(out io.Writer, f *os.File) error {
 	reader := bufio.NewReader(f)
+	poll := bgLogFollowInitialPoll
 	for {
 		line, err := reader.ReadString('\n')
 		if len(line) > 0 {
 			fmt.Fprint(out, line)
+			poll = bgLogFollowInitialPoll
 		}
 		switch err {
 		case nil:
 			continue
 		case io.EOF:
-			time.Sleep(500 * time.Millisecond)
+			time.Sleep(poll)
+			if poll < bgLogFollowMaxPoll {
+				poll *= 2
+				if poll > bgLogFollowMaxPoll {
+					poll = bgLogFollowMaxPoll
+				}
+			}
 		default:
 			return err
 		}

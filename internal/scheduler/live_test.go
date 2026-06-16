@@ -86,6 +86,48 @@ func TestLiveStatusDisabledPassthrough(t *testing.T) {
 	}
 }
 
+func TestLiveStatusBacksOffIdleRedraws(t *testing.T) {
+	now := time.Unix(100, 0)
+	l := &liveStatus{
+		enabled: true,
+		items:   make(map[string]liveItem),
+		order:   []string{"claude", "codex"},
+	}
+	interval := func() time.Duration {
+		l.mu.Lock()
+		defer l.mu.Unlock()
+		return l.nextTickIntervalLocked(now)
+	}
+
+	if got := interval(); got != liveVeryFarTick {
+		t.Fatalf("empty live status interval = %s, want %s", got, liveVeryFarTick)
+	}
+	l.items["claude"] = liveItem{state: "checking usage…"}
+	if got := interval(); got != liveTick {
+		t.Fatalf("active live status interval = %s, want %s", got, liveTick)
+	}
+	l.items["claude"] = liveItem{state: "5h window", deadline: now.Add(45 * time.Second)}
+	if got := interval(); got != liveTick {
+		t.Fatalf("sub-minute countdown interval = %s, want %s", got, liveTick)
+	}
+	l.items["claude"] = liveItem{state: "5h window", deadline: now.Add(30 * time.Minute)}
+	if got := interval(); got != liveNearTick {
+		t.Fatalf("near countdown interval = %s, want %s", got, liveNearTick)
+	}
+	l.items["claude"] = liveItem{state: "5h window", deadline: now.Add(5 * time.Hour)}
+	if got := interval(); got != liveFarTick {
+		t.Fatalf("far countdown interval = %s, want %s", got, liveFarTick)
+	}
+	l.items["claude"] = liveItem{state: "weekly limit", deadline: now.Add(48 * time.Hour)}
+	if got := interval(); got != liveVeryFarTick {
+		t.Fatalf("very far countdown interval = %s, want %s", got, liveVeryFarTick)
+	}
+	l.items["codex"] = liveItem{state: "5h window", deadline: now.Add(30 * time.Second)}
+	if got := interval(); got != liveTick {
+		t.Fatalf("shortest provider should drive interval = %s, want %s", got, liveTick)
+	}
+}
+
 func TestLiveStatusRender(t *testing.T) {
 	var buf bytes.Buffer
 	// Construct an enabled-but-colorless renderer directly (a real TTY isn't

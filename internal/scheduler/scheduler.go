@@ -223,10 +223,16 @@ func (s *Scheduler) runTarget(ctx context.Context, t Target) {
 				continue
 			}
 			s.log.Printf("[%s] DRY-RUN would ping now: %s", name, res.Command)
-			s.live.set(name, "dry-run — would ping now", time.Time{})
 			// In dry-run we can't actually start a window, so estimate the next
 			// cycle from the configured window length to keep the loop sane.
+			// Sleep immediately instead of doing an extra usage read that cannot
+			// observe a real newly-started window.
 			lastPingAt = time.Now()
+			wait := windowLen(u.FiveHour) + s.cfg.ResetBuffer.Duration
+			s.live.set(name, "dry-run — next estimated ping", lastPingAt.Add(wait))
+			if !sleepCtx(ctx, wait) {
+				return
+			}
 			continue
 		}
 		if err != nil {
@@ -241,7 +247,7 @@ func (s *Scheduler) runTarget(ctx context.Context, t Target) {
 		}
 		lastPingAt = time.Now()
 		s.log.Printf("[%s] ping sent, new window started%s", name, triggerCost(res))
-		s.live.set(name, "ping sent — new window started", time.Time{})
+		s.live.set(name, "ping sent — checking window soon", lastPingAt.Add(postPingGrace))
 		s.notify(name+": window started", "New 5h window"+triggerCost(res))
 
 		if !sleepCtx(ctx, postPingGrace) {
