@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/wavever/CCLimitPing/internal/config"
+	"github.com/wavever/CCLimitPing/internal/provider"
 	"github.com/wavever/CCLimitPing/internal/usage"
 )
 
@@ -30,27 +31,36 @@ func newStatusCmd() *cobra.Command {
 			if len(providers) == 0 {
 				return fmt.Errorf("no providers enabled in config")
 			}
-			out := cmd.OutOrStdout()
-			failed := 0
-			for _, p := range providers {
-				ctx, cancel := context.WithTimeout(cmd.Context(), 30*time.Second)
-				u, err := p.ReadUsage(ctx)
-				cancel()
-				if err != nil {
-					fmt.Fprintf(out, "%-7s  error: %v\n", p.Name(), err)
-					failed++
-					continue
-				}
-				printUsage(out, u, verbose)
-			}
-			if failed > 0 {
-				return fmt.Errorf("status failed for %d provider(s)", failed)
-			}
-			return nil
+			return runStatus(cmd.Context(), cmd.OutOrStdout(), cmd.ErrOrStderr(), text, providers, verbose)
 		},
 	}
 	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, text.statusVerboseFlag)
 	return cmd
+}
+
+func runStatus(ctx context.Context, out, progress io.Writer, text cliText, providers []provider.Provider, verbose bool) error {
+	if progress == nil {
+		progress = io.Discard
+	}
+	failed := 0
+	for _, p := range providers {
+		if text.statusFetchingFmt != "" {
+			fmt.Fprintf(progress, text.statusFetchingFmt, p.Name())
+		}
+		readCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		u, err := p.ReadUsage(readCtx)
+		cancel()
+		if err != nil {
+			fmt.Fprintf(out, "%-7s  error: %v\n", p.Name(), err)
+			failed++
+			continue
+		}
+		printUsage(out, u, verbose)
+	}
+	if failed > 0 {
+		return fmt.Errorf("status failed for %d provider(s)", failed)
+	}
+	return nil
 }
 
 func printUsage(out io.Writer, u *usage.Usage, verbose bool) {

@@ -26,6 +26,7 @@ type cliText struct {
 	statusShort       string
 	statusLong        string
 	statusVerboseFlag string
+	statusFetchingFmt string
 
 	pingShort      string
 	pingLong       string
@@ -170,6 +171,7 @@ Use "{{.CommandPath}} [command] --help" for more information about a command.{{e
 	statusShort:       "Show current 5h/weekly usage and reset countdowns without using quota",
 	statusLong:        "Show current 5h and weekly usage for every enabled provider. This command only reads usage data from zero-quota endpoints; it does not send a ping or consume model quota.",
 	statusVerboseFlag: "print the raw JSON response",
+	statusFetchingFmt: "Fetching %s usage...\n",
 
 	pingShort: "Trigger a provider window now with a minimal message",
 	pingLong: `Trigger a rate-limit window immediately by sending the minimal message for the selected provider.
@@ -343,6 +345,7 @@ var zhText = cliText{
 	statusShort:       "查看当前 5h/周用量和重置倒计时，不消耗额度",
 	statusLong:        "查看所有已启用 Provider 的当前 5h 和周用量。此命令只通过零消耗接口读取用量，不会发送 ping，也不会消耗模型额度。",
 	statusVerboseFlag: "打印原始 JSON 响应",
+	statusFetchingFmt: "正在查询 %s 用量...\n",
 
 	pingShort: "用最小消息立即触发 Provider 的限额窗口",
 	pingLong: `通过向指定 Provider 发送最小消息，立即触发一个限额窗口。
